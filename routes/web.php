@@ -28,6 +28,7 @@ Route::get('/', function () {
 });
 
 Route::get('/go/{slug}', [ShortLinkController::class, 'redirect'])->name('shortlink.redirect');
+Route::get('/s/{slug}/acknowledge', [ShortLinkController::class, 'acknowledge'])->name('shortlink.acknowledge');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', [

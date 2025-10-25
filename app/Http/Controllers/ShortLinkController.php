@@ -29,18 +29,32 @@ class ShortLinkController extends Controller
         return to_route('dashboard')->with('success', 'Shortlink berhasil dibuat!');
     }
 
-    public function redirect($slug)
-    {
-        $shortLink = ShortLink::where('slug', $slug)->firstOrFail();
+ public function redirect($slug)
+{
+    $shortLink = ShortLink::where('slug', $slug)->firstOrFail();
 
-        if ($shortLink->current_target == 1) {
-            $destinationUrl = $shortLink->link_1;
-            $shortLink->current_target = 2;
-            $shortLink->save();
-        } else {
-            $destinationUrl = $shortLink->link_2;
-        }
-
-        return redirect()->away($destinationUrl);
+    // Jika current_target belum di-set atau 1, tampilkan link_1 dulu
+    if (is_null($shortLink->current_target) || $shortLink->current_target == 1) {
+        // Redirect ke link_1 tanpa langsung update database
+        // Gunakan endpoint acknowledge untuk update current_target
+        $ackUrl = route('shortlink.acknowledge', $shortLink->slug);
+        return redirect()->away($ackUrl);
+    } else {
+        // Kalau sudah target 2, langsung ke link_2
+        return redirect()->away($shortLink->link_2);
     }
+}
+
+// Endpoint baru untuk acknowledge link_1
+public function acknowledge($slug)
+{
+    $shortLink = ShortLink::where('slug', $slug)->firstOrFail();
+
+    // Update current_target baru setelah user diarahkan ke link_1
+    $shortLink->current_target = 2;
+    $shortLink->save();
+
+    // Redirect ke link_1 sesungguhnya
+    return redirect()->away($shortLink->link_1);
+}
 }
